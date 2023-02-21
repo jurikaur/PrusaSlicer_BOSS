@@ -476,6 +476,8 @@ static std::vector<std::string> s_Preset_print_options {
     // BOSS
     "only_one_perimeter_top",
     "min_width_top_surface",
+
+    "solid_fill_pattern",
 };
 
 static std::vector<std::string> s_Preset_filament_options {
