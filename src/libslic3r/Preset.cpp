@@ -478,6 +478,8 @@ static std::vector<std::string> s_Preset_print_options {
     "min_width_top_surface",
 
     "solid_fill_pattern",
+
+    "bridge_density",
 };
 
 static std::vector<std::string> s_Preset_filament_options {
