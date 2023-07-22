@@ -474,7 +474,8 @@ static std::vector<std::string> s_Preset_print_options {
     "perimeter_generator", "wall_transition_length", "wall_transition_filter_deviation", "wall_transition_angle",
     "wall_distribution_count", "min_feature_size", "min_bead_width",
     // BOSS
-    "only_one_perimeter_top",
+    "only_one_perimeter_top",    
+    "only_one_perimeter_first_layer",
     "min_width_top_surface",
 
     "solid_fill_pattern",
