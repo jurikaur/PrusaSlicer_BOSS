@@ -523,6 +523,7 @@ static std::vector<std::string> s_Preset_filament_options {
     "filament_vendor", "compatible_prints", "compatible_prints_condition", "compatible_printers", "compatible_printers_condition", "inherits",
     // BOSS
     "chamber_temperature",
+    "filament_shrink", 
 };
 
 static std::vector<std::string> s_Preset_machine_limits_options {
