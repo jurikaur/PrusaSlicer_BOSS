@@ -138,7 +138,8 @@ static const t_config_enum_values s_keys_map_InfillPattern {
     { "octagramspiral",     ipOctagramSpiral },
     { "adaptivecubic",      ipAdaptiveCubic },
     { "supportcubic",       ipSupportCubic },
-    { "lightning",          ipLightning }
+    { "lightning",          ipLightning },
+    { "crosshatch",         ipCrossHatch }
 };
 CONFIG_OPTION_ENUM_DEFINE_STATIC_MAPS(InfillPattern)
 
@@ -544,11 +545,11 @@ void PrintConfigDef::init_fff_params()
     def->mode = comExpert;
     def->set_default_value(new ConfigOptionFloat(0));
 
-    def = this->add("bridge_accel_to_decel", coFloat);
-    def->label = L("Accel to Decel");
-    def->tooltip = L("This is how fast the toolhead may go from acceleration to deceleration. "
+    def = this->add("bridge_minimum_cruise_ratio", coFloat);
+    def->label = L("Minimum Cruise Ratio");
+    def->tooltip = L("The minimum distance traveled at cruising speed relative to the total distance traveled before going from acceleration to deceleration. "
                    "Set zero to disable control for bridges.");
-    def->sidetext = L("mm/s²");
+    def->sidetext = L("mm");
     def->min = 0;
     def->mode = comExpert;
     def->set_default_value(new ConfigOptionFloat(0));
@@ -604,6 +605,27 @@ void PrintConfigDef::init_fff_params()
     def->mode = comAdvanced;
     def->set_default_value(new ConfigOptionFloat(1));
 
+    def = this->add("first_layer_flow_ratio", coFloat);
+    def->label = L("First layer flow ratio");
+    def->category = L("Advanced");
+    def->tooltip = L("This factor affects the amount of plastic for the first layer. "
+                   "You can increase this to over-extrude on the first layer if there is not enough plastic because your bed isn't levelled, "
+                   "or decrease it a bit to prevent rought first layers.");
+    def->min = 0.5;
+    def->max = 1.5;
+    def->mode = comAdvanced;
+    def->set_default_value(new ConfigOptionFloat(1));
+
+    def = this->add("top_layer_flow_ratio", coFloat);
+    def->label = L("Top layer flow ratio");
+    def->category = L("Advanced");
+    def->tooltip = L("This factor affects the amount of plastic for the top layer. Increase this to over-extrude "
+                     "on the top layer if there is not enough plastic or decrease it to prevent rough top layers.");
+    def->min = 0.5;
+    def->max = 1.5;
+    def->mode = comAdvanced;
+    def->set_default_value(new ConfigOptionFloat(1));
+
     def = this->add("only_one_perimeter_first_layer", coBool);
     def->label = L("On First layer");
     def->category = L("Layers and Perimeters");
@@ -629,6 +651,26 @@ void PrintConfigDef::init_fff_params()
     def->max_literal = 15;
     def->mode = comExpert;
     def->set_default_value(new ConfigOptionFloatOrPercent(100, true));
+
+    def = this->add("first_layer_flow_ratio", coFloat);
+    def->label = L("First layer flow ratio");
+    def->category = L("Advanced");
+    def->tooltip = L("This factor affects the amount of plastic for first layer. "
+                   "You can decrease it slightly (e.g. 0.85) to prevent rough first layer and sticking to the nozzle, "
+                   "or increase a bit to improve sticking to unflat bed (though it's better to have autoleveling or flat bed).");
+    def->min = 0.5;
+    def->max = 1.5;
+    def->mode = comAdvanced;
+    def->set_default_value(new ConfigOptionFloat(1));
+
+    def = this->add("top_layer_flow_ratio", coFloat);
+    def->label = L("Top layer flow ratio");
+    def->category = L("Advanced");
+    def->tooltip = L("This factor affects the amount of plastic for top layer. Play with this parameter to get smooth surface.");
+    def->min = 0.5;
+    def->max = 1.5;
+    def->mode = comAdvanced;
+    def->set_default_value(new ConfigOptionFloat(1));
 
     def = this->add("bridge_speed", coFloat);
     def->label = L("Bridges");
@@ -855,11 +897,11 @@ void PrintConfigDef::init_fff_params()
     def->mode = comExpert;
     def->set_default_value(new ConfigOptionFloat(0));
 
-    def = this->add("default_accel_to_decel", coFloat);
-    def->label = L("Accel to Decel");
-    def->tooltip = L("This is how fast the toolhead may go from acceleration to deceleration. "
-                   "Set zero to disable all accel to decel controls.");
-    def->sidetext = L("mm/s²");
+    def = this->add("default_minimum_cruise_ratio", coFloat);
+    def->label = L("Minimum Cruise Ratio");
+    def->tooltip = L("The minimum distance traveled at cruising speed relative to the total distance traveled before going from acceleration to deceleration. "
+                   "Set zero to disable all Minimum Cruise Ratio controls.");
+    def->sidetext = L("mm");
     def->min = 0;
     def->mode = comExpert;
     def->set_default_value(new ConfigOptionFloat(0));
@@ -980,12 +1022,14 @@ void PrintConfigDef::init_fff_params()
     def->category = L("Extrusion Width");
     def->tooltip = L("Set this to a non-zero value to set a manual extrusion width for external perimeters. "
                    "If left zero, default extrusion width will be used if set, otherwise 1.125 x nozzle diameter will be used. "
-                   "If expressed as percentage (for example 200%), it will be computed over layer height.");
+                   "If expressed as percentage (for example 200%), it will be computed over the nozzle diameter.");
     def->sidetext = L("mm or %");
+    def->ratio_over = "nozzle_diameter";
     def->min = 0;
-    def->max_literal = 50;
+    def->max = 1000;
+    def->max_literal = 10;
     def->mode = comAdvanced;
-    def->set_default_value(new ConfigOptionFloatOrPercent(0, false));
+    def->set_default_value(new ConfigOptionFloatOrPercent(105, true));
 
     def = this->add("external_perimeter_speed", coFloatOrPercent);
     def->label = L("External perimeters");
@@ -1104,11 +1148,12 @@ void PrintConfigDef::init_fff_params()
     def->tooltip = L("Set this to a non-zero value to allow a manual extrusion width. "
                    "If left to zero, Slic3r derives extrusion widths from the nozzle diameter "
                    "(see the tooltips for perimeter extrusion width, infill extrusion width etc). "
-                   "If expressed as percentage (for example: 230%), it will be computed over layer height.");
+                   "If expressed as percentage (for example: 230%), it will be computed over the nozzle diameter.");
     def->sidetext = L("mm or %");
+    def->ratio_over = "nozzle_diameter";
     def->min = 0;
     def->max = 1000;
-    def->max_literal = 50;
+    def->max_literal = 10;
     def->mode = comAdvanced;
     def->set_default_value(new ConfigOptionFloatOrPercent(0, false));
 
@@ -1454,7 +1499,8 @@ void PrintConfigDef::init_fff_params()
         { "octagramspiral",     L("Octagram Spiral")},
         { "adaptivecubic",      L("Adaptive Cubic")},
         { "supportcubic",       L("Support Cubic")},
-        { "lightning",          L("Lightning")}
+        { "lightning",          L("Lightning")},
+        { "crosshatch",         L("Cross Hatch")}
     });
     def->set_default_value(new ConfigOptionEnum<InfillPattern>(ipStars));
 
@@ -1467,11 +1513,11 @@ void PrintConfigDef::init_fff_params()
     def->mode = comExpert;
     def->set_default_value(new ConfigOptionFloat(0));
 
-    def = this->add("first_layer_accel_to_decel", coFloat);
-    def->label = L("Accel to Decel");
-    def->tooltip = L("This is how fast the toolhead may go from acceleration to deceleration. "
+    def = this->add("first_layer_minimum_cruise_ratio", coFloat);
+    def->label = L("Minimum Cruise Ratio");
+    def->tooltip = L("The minimum distance traveled at cruising speed relative to the total distance traveled before going from acceleration to deceleration. "
                    "Set zero to disable control for first_layer.");
-    def->sidetext = L("mm/s²");
+    def->sidetext = L("mm");
     def->min = 0;
     def->mode = comExpert;
     def->set_default_value(new ConfigOptionFloat(0));
@@ -1494,11 +1540,11 @@ void PrintConfigDef::init_fff_params()
     def->mode = comExpert;
     def->set_default_value(new ConfigOptionFloat(0));
 
-    def = this->add("first_layer_accel_to_decel_over_raft", coFloat);
-    def->label = L("Accel to Decel");
-    def->tooltip = L("This is how fast the toolhead may go from acceleration to deceleration. "
+    def = this->add("first_layer_minimum_cruise_ratio_over_raft", coFloat);
+    def->label = L("Minimum Cruise Ratio");
+    def->tooltip = L("The minimum distance traveled at cruising speed relative to the total distance traveled before going from acceleration to deceleration. "
                    "Set zero to disable control for first layer of object above raft interface.");
-    def->sidetext = L("mm/s²");
+    def->sidetext = L("mm");
     def->min = 0;
     def->mode = comExpert;
     def->set_default_value(new ConfigOptionFloat(0));
@@ -1527,14 +1573,15 @@ void PrintConfigDef::init_fff_params()
     def->category = L("Extrusion Width");
     def->tooltip = L("Set this to a non-zero value to set a manual extrusion width for first layer. "
                    "You can use this to force fatter extrudates for better adhesion. If expressed "
-                   "as percentage (for example 120%) it will be computed over first layer height. "
+                   "as percentage (for example 120%) it will be computed over the nozzle diameter "
                    "If set to zero, it will use the default extrusion width.");
     def->sidetext = L("mm or %");
-    def->ratio_over = "first_layer_height";
+    def->ratio_over = "nozzle_diameter";
     def->min = 0;
-    def->max_literal = 50;
+    def->max = 1000;
+    def->max_literal = 10;
     def->mode = comAdvanced;
-    def->set_default_value(new ConfigOptionFloatOrPercent(200, true));
+    def->set_default_value(new ConfigOptionFloatOrPercent(140, true));
 
     def = this->add("first_layer_height", coFloatOrPercent);
     def->label = L("First layer height");
@@ -1706,11 +1753,11 @@ void PrintConfigDef::init_fff_params()
     def->mode = comExpert;
     def->set_default_value(new ConfigOptionFloat(0));
 
-    def = this->add("infill_accel_to_decel", coFloat);
-    def->label = L("Accel to Decel");
-    def->tooltip = L("This is how fast the toolhead may go from acceleration to deceleration. "
+    def = this->add("infill_minimum_cruise_ratio", coFloat);
+    def->label = L("Minimum Cruise Ratio");
+    def->tooltip = L("The minimum distance traveled at cruising speed relative to the total distance traveled before going from acceleration to deceleration. "
                    "Set zero to disable control for infill.");
-    def->sidetext = L("mm/s²");
+    def->sidetext = L("mm");
     def->min = 0;
     def->mode = comExpert;
     def->set_default_value(new ConfigOptionFloat(0));
@@ -1733,11 +1780,11 @@ void PrintConfigDef::init_fff_params()
     def->mode = comExpert;
     def->set_default_value(new ConfigOptionFloat(0));
 
-    def = this->add("solid_infill_accel_to_decel", coFloat);
-    def->label = L("Accel to Decel");
-    def->tooltip = L("This is how fast the toolhead may go from acceleration to deceleration. "
+    def = this->add("solid_infill_minimum_cruise_ratio", coFloat);
+    def->label = L("Minimum Cruise Ratio");
+    def->tooltip = L("The minimum distance traveled at cruising speed relative to the total distance traveled before going from acceleration to deceleration. "
                    "Set zero to disable control for solid infill.");
-    def->sidetext = L("mm/s²");
+    def->sidetext = L("mm");
     def->min = 0;
     def->mode = comExpert;
     def->set_default_value(new ConfigOptionFloat(0));
@@ -1760,11 +1807,11 @@ void PrintConfigDef::init_fff_params()
     def->mode = comExpert;
     def->set_default_value(new ConfigOptionFloat(0));
 
-    def = this->add("top_solid_infill_accel_to_decel", coFloat);
-    def->label = L("Accel to Decel");
-    def->tooltip = L("This is how fast the toolhead may go from acceleration to deceleration. "
+    def = this->add("top_solid_infill_minimum_cruise_ratio", coFloat);
+    def->label = L("Minimum Cruise Ratio");
+    def->tooltip = L("The minimum distance traveled at cruising speed relative to the total distance traveled before going from acceleration to deceleration. "
                    "Set zero to disable control for top solid infill.");
-    def->sidetext = L("mm/s²");
+    def->sidetext = L("mm");
     def->min = 0;
     def->mode = comExpert;
     def->set_default_value(new ConfigOptionFloat(0));
@@ -1779,7 +1826,7 @@ void PrintConfigDef::init_fff_params()
     def->set_default_value(new ConfigOptionInt(0));
 
     def = this->add("wipe_tower_acceleration", coFloat);
-    def->label = L("Wipe tower");
+    def->label = L("Acceleration");
     def->tooltip = L("This is the acceleration your printer will use for wipe tower. Set zero to disable "
                      "acceleration control for the wipe tower.");
     def->sidetext = L("mm/s²");
@@ -1787,11 +1834,11 @@ void PrintConfigDef::init_fff_params()
     def->mode = comExpert;
     def->set_default_value(new ConfigOptionFloat(0));
 
-    def = this->add("wipe_tower_accel_to_decel", coFloat);
-    def->label = L("Accel to Decel");
-    def->tooltip = L("This is how fast the toolhead may go from acceleration to deceleration. "
+    def = this->add("wipe_tower_minimum_cruise_ratio", coFloat);
+    def->label = L("Minimum Cruise Ratio");
+    def->tooltip = L("The minimum distance traveled at cruising speed relative to the total distance traveled before going from acceleration to deceleration. "
                    "Set zero to disable control for the wipe tower.");
-    def->sidetext = L("mm/s²");
+    def->sidetext = L("mm");
     def->min = 0;
     def->mode = comExpert;
     def->set_default_value(new ConfigOptionFloat(0));
@@ -1814,11 +1861,11 @@ void PrintConfigDef::init_fff_params()
     def->mode = comExpert;
     def->set_default_value(new ConfigOptionFloat(0));
 
-    def = this->add("travel_accel_to_decel", coFloat);
-    def->label = L("Accel to Decel");
-    def->tooltip = L("This is how fast the toolhead may go from acceleration to deceleration. "
+    def = this->add("travel_minimum_cruise_ratio", coFloat);
+    def->label = L("Minimum Cruise Ratio");
+    def->tooltip = L("The minimum distance traveled at cruising speed relative to the total distance traveled before going from acceleration to deceleration. "
                    "Set zero to disable control for travel.");
-    def->sidetext = L("mm/s²");
+    def->sidetext = L("mm");
     def->min = 0;
     def->mode = comExpert;
     def->set_default_value(new ConfigOptionFloat(0));
@@ -1903,10 +1950,12 @@ void PrintConfigDef::init_fff_params()
     def->tooltip = L("Set this to a non-zero value to set a manual extrusion width for infill. "
                    "If left zero, default extrusion width will be used if set, otherwise 1.125 x nozzle diameter will be used. "
                    "You may want to use fatter extrudates to speed up the infill and make your parts stronger. "
-                   "If expressed as percentage (for example 90%) it will be computed over layer height.");
+                   "If expressed as percentage (for example 90%) it will be computed over the nozzle diameter.");
     def->sidetext = L("mm or %");
+    def->ratio_over = "nozzle_diameter";
     def->min = 0;
-    def->max_literal = 50;
+    def->max = 1000;
+    def->max_literal = 10;
     def->mode = comAdvanced;
     def->set_default_value(new ConfigOptionFloatOrPercent(0, false));
 
@@ -2182,16 +2231,6 @@ void PrintConfigDef::init_fff_params()
     def->min = 0;
     def->mode = comAdvanced;
     def->set_default_value(new ConfigOptionFloats{ 1500., 1250. });
-
-    // Klipper: SET_VELOCITY_LIMIT ACCEL_TO_DECEL=... [mm/sec^2]
-    def = this->add("machine_max_accel_to_decel", coFloats);
-    def->full_label = L("Maximum acceleration to deceleration.");
-    def->category = L("Machine limits");
-    def->tooltip = L("Maximum pseudo acceleration when transitioning from acceleration to deceleration.");
-    def->sidetext = L("mm/s²");
-    def->min = 0;
-    def->mode = comAdvanced;
-    def->set_default_value(new ConfigOptionFloats{ 750., 625. });
 
     // M204 R... [mm/sec^2]
     def = this->add("machine_max_acceleration_retracting", coFloats);
@@ -2590,11 +2629,11 @@ void PrintConfigDef::init_fff_params()
     def->mode = comExpert;
     def->set_default_value(new ConfigOptionFloat(0));
 
-    def = this->add("perimeter_accel_to_decel", coFloat);
-    def->label = L("Accel to Decel");
-    def->tooltip = L("This is how fast the toolhead may go from acceleration to deceleration. "
+    def = this->add("perimeter_minimum_cruise_ratio", coFloat);
+    def->label = L("Minimum Cruise Ratio");
+    def->tooltip = L("The minimum distance traveled at cruising speed relative to the total distance traveled before going from acceleration to deceleration. "
                    "Set zero to disable control for perimeters.");
-    def->sidetext = L("mm/s²");
+    def->sidetext = L("mm");
     def->min = 0;
     def->mode = comExpert;
     def->set_default_value(new ConfigOptionFloat(0));
@@ -2615,11 +2654,11 @@ void PrintConfigDef::init_fff_params()
     def->mode = comExpert;
     def->set_default_value(new ConfigOptionFloat(0));
 
-    def = this->add("external_perimeter_accel_to_decel", coFloat);
-    def->label = L("Accel to Decel");
-    def->tooltip = L("This is how fast the toolhead may go from acceleration to deceleration. "
+    def = this->add("external_perimeter_minimum_cruise_ratio", coFloat);
+    def->label = L("Minimum Cruise Ratio");
+    def->tooltip = L("The minimum distance traveled at cruising speed relative to the total distance traveled before going from acceleration to deceleration. "
                    "Set zero to disable control for bridges.");
-    def->sidetext = L("mm/s²");
+    def->sidetext = L("mm");
     def->min = 0;
     def->mode = comExpert;
     def->set_default_value(new ConfigOptionFloat(0));
@@ -2647,11 +2686,13 @@ void PrintConfigDef::init_fff_params()
     def->tooltip = L("Set this to a non-zero value to set a manual extrusion width for perimeters. "
                    "You may want to use thinner extrudates to get more accurate surfaces. "
                    "If left zero, default extrusion width will be used if set, otherwise 1.125 x nozzle diameter will be used. "
-                   "If expressed as percentage (for example 200%) it will be computed over layer height.");
+                   "If expressed as percentage (for example 200%) it will be computed over the nozzle diameter.");
     def->sidetext = L("mm or %");
     def->aliases = { "perimeters_extrusion_width" };
+    def->ratio_over = "nozzle_diameter";
     def->min = 0;
-    def->max_literal = 50;
+    def->max = 1000;
+    def->max_literal = 10;
     def->mode = comAdvanced;
     def->set_default_value(new ConfigOptionFloatOrPercent(0, false));
 
@@ -3070,10 +3111,12 @@ void PrintConfigDef::init_fff_params()
     def->category = L("Extrusion Width");
     def->tooltip = L("Set this to a non-zero value to set a manual extrusion width for infill for solid surfaces. "
                    "If left zero, default extrusion width will be used if set, otherwise 1.125 x nozzle diameter will be used. "
-                   "If expressed as percentage (for example 90%) it will be computed over layer height.");
+                   "If expressed as percentage (for example 90%) it will be computed over the nozzle diameter.");
     def->sidetext = L("mm or %");
+    def->ratio_over = "nozzle_diameter";
     def->min = 0;
-    def->max_literal = 50;
+    def->max = 1000;
+    def->max_literal = 10;
     def->mode = comAdvanced;
     def->set_default_value(new ConfigOptionFloatOrPercent(0, false));
 
@@ -3339,10 +3382,12 @@ void PrintConfigDef::init_fff_params()
     def->category = L("Extrusion Width");
     def->tooltip = L("Set this to a non-zero value to set a manual extrusion width for support material. "
                    "If left zero, default extrusion width will be used if set, otherwise nozzle diameter will be used. "
-                   "If expressed as percentage (for example 90%) it will be computed over layer height.");
+                   "If expressed as percentage (for example 90%) it will be computed over the nozzle diameter.");
     def->sidetext = L("mm or %");
+    def->ratio_over = "nozzle_diameter";
     def->min = 0;
-    def->max_literal = 50;
+    def->max = 1000;
+    def->max_literal = 10;
     def->mode = comAdvanced;
     def->set_default_value(new ConfigOptionFloatOrPercent(0, false));
 
@@ -3660,12 +3705,14 @@ void PrintConfigDef::init_fff_params()
     def->tooltip = L("Set this to a non-zero value to set a manual extrusion width for infill for top surfaces. "
                    "You may want to use thinner extrudates to fill all narrow regions and get a smoother finish. "
                    "If left zero, default extrusion width will be used if set, otherwise nozzle diameter will be used. "
-                   "If expressed as percentage (for example 90%) it will be computed over layer height.");
+                   "If expressed as percentage (for example 90%) it will be computed over the nozzle diameter.");
     def->sidetext = L("mm or %");
+    def->ratio_over = "nozzle_diameter";
     def->min = 0;
-    def->max_literal = 50;
+    def->max = 1000;
+    def->max_literal = 10;
     def->mode = comAdvanced;
-    def->set_default_value(new ConfigOptionFloatOrPercent(0, false));
+    def->set_default_value(new ConfigOptionFloatOrPercent(105, true));
 
     def = this->add("top_solid_infill_speed", coFloatOrPercent);
     def->label = L("Top solid infill");

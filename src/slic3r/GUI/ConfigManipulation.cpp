@@ -285,12 +285,12 @@ void ConfigManipulation::toggle_print_fff_options(DynamicPrintConfig* config)
                     "first_layer_jerk", "first_layer_jerk_over_raft", "wipe_tower_jerk", "travel_jerk" })
         toggle_field(el, have_default_jerk);
 
-    bool have_accel_to_decel = config->opt_float("default_accel_to_decel") > 0 && gcflavor == gcfKlipper;
-    for (auto el : { "perimeter_accel_to_decel", "infill_accel_to_decel", "top_solid_infill_accel_to_decel",
-                    "solid_infill_accel_to_decel", "external_perimeter_accel_to_decel", "bridge_accel_to_decel",
-                    "first_layer_accel_to_decel", "first_layer_accel_to_decel_over_raft", "travel_accel_to_decel",
-                    "wipe_tower_accel_to_decel" })
-        toggle_field(el, have_accel_to_decel);
+    bool have_minimum_cruise_ratio = config->opt_float("default_minimum_cruise_ratio") > 0 && gcflavor == gcfKlipper;
+    for (auto el : { "perimeter_minimum_cruise_ratio", "infill_minimum_cruise_ratio", "top_solid_infill_minimum_cruise_ratio",
+                    "solid_infill_minimum_cruise_ratio", "external_perimeter_minimum_cruise_ratio", "bridge_minimum_cruise_ratio",
+                    "first_layer_minimum_cruise_ratio", "first_layer_minimum_cruise_ratio_over_raft", "travel_minimum_cruise_ratio",
+                    "wipe_tower_minimum_cruise_ratio" })
+        toggle_field(el, have_minimum_cruise_ratio);
 
     bool have_skirt = config->opt_int("skirts") > 0;
     toggle_field("skirt_height", have_skirt && config->opt_enum<DraftShield>("draft_shield") != dsEnabled);
@@ -339,6 +339,16 @@ void ConfigManipulation::toggle_print_fff_options(DynamicPrintConfig* config)
     toggle_field("raft_contact_distance", have_raft && !have_support_soluble);
     for (auto el : { "raft_expansion", "first_layer_speed_over_raft" })
         toggle_field(el, have_raft);
+
+    //for default_extrusion_width/spacing, you need to ahve at least an extrusion_width with 0
+    bool have_default_width = config->option("first_layer_extrusion_width")->getFloat() == 0 ||
+        (config->option("perimeter_extrusion_width")->getFloat() == 0 && (have_perimeters || have_brim)) ||
+        (config->option("external_perimeter_extrusion_width")->getFloat() == 0 && have_perimeters) ||
+        (config->option("infill_extrusion_width")->getFloat() == 0 && (have_infill || has_solid_infill)) ||
+        (config->option("solid_infill_extrusion_width")->getFloat() == 0 && has_solid_infill) ||
+        (config->option("top_infill_extrusion_width")->getFloat() == 0 && has_top_solid_infill) ||
+        (config->option("support_material_extrusion_width")->getFloat() == 0 && have_support_material);
+    toggle_field("extrusion_width", have_default_width);
 
     bool has_ironing = config->opt_bool("ironing");
     for (auto el : { "ironing_type", "ironing_flowrate", "ironing_spacing", "ironing_speed" })

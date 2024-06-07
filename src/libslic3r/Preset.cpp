@@ -436,7 +436,7 @@ void Preset::set_visible_from_appconfig(const AppConfig &app_config)
 }
 
 static std::vector<std::string> s_Preset_print_options {
-    "layer_height", "first_layer_height", "perimeters", "alternate_extra_perimeter", "spiral_vase", "slice_closing_radius", "slicing_mode",
+    "layer_height", "first_layer_height", "perimeters", "spiral_vase", "slice_closing_radius", "slicing_mode",
     "top_solid_layers", "top_solid_min_thickness", "bottom_solid_layers", "bottom_solid_min_thickness",
     "extra_perimeters", "extra_perimeters_on_overhangs", "avoid_crossing_curled_overhangs", "avoid_crossing_perimeters", "thin_walls", "overhangs",
     "seam_position","staggered_inner_seams", "external_perimeters_first", "fill_density", "fill_pattern", "top_fill_pattern", "bottom_fill_pattern",
@@ -449,13 +449,9 @@ static std::vector<std::string> s_Preset_print_options {
     "perimeter_speed", "small_perimeter_speed", "external_perimeter_speed", "infill_speed", "solid_infill_speed",
     "enable_dynamic_overhang_speeds", "overhang_speed_0", "overhang_speed_1", "overhang_speed_2", "overhang_speed_3",
     "top_solid_infill_speed", "support_material_speed", "support_material_xy_spacing", "support_material_interface_speed",
-    "bridge_speed", "gap_fill_speed", "gap_fill_enabled", "travel_speed", "travel_speed_z", "first_layer_speed", "first_layer_speed_over_raft", "perimeter_acceleration", "perimeter_accel_to_decel",
-    "infill_acceleration", "infill_accel_to_decel", "external_perimeter_acceleration", "external_perimeter_accel_to_decel", "top_solid_infill_acceleration", "top_solid_infill_accel_to_decel",
-    "solid_infill_acceleration", "solid_infill_accel_to_decel", "travel_acceleration", "travel_accel_to_decel", "bridge_acceleration", "bridge_accel_to_decel", "first_layer_acceleration",
-    "first_layer_accel_to_decel", "first_layer_acceleration_over_raft", "first_layer_accel_to_decel_over_raft", "default_acceleration", "default_accel_to_decel", "wipe_tower_acceleration", "wipe_tower_accel_to_decel",
-    "skirts", "skirt_distance", "skirt_height", "draft_shield", "perimeter_jerk", "infill_jerk",
-    "external_perimeter_jerk", "top_solid_infill_jerk", "solid_infill_jerk", "travel_jerk", "wipe_tower_jerk",
-    "bridge_jerk", "first_layer_jerk", "first_layer_jerk_over_raft", "default_jerk",
+    "bridge_speed", "gap_fill_speed", "gap_fill_enabled", "travel_speed", "travel_speed_z", "first_layer_speed", "first_layer_speed_over_raft", "perimeter_acceleration", "infill_acceleration",
+    "external_perimeter_acceleration", "top_solid_infill_acceleration", "solid_infill_acceleration", "travel_acceleration", "wipe_tower_acceleration",
+    "bridge_acceleration", "first_layer_acceleration", "first_layer_acceleration_over_raft", "default_acceleration", "skirts", "skirt_distance", "skirt_height", "draft_shield",
     "min_skirt_length", "brim_width", "brim_separation", "brim_type", "support_material", "support_material_auto", "support_material_threshold", "support_material_enforce_layers",
     "raft_layers", "raft_first_layer_density", "raft_first_layer_expansion", "raft_contact_distance", "raft_expansion",
     "support_material_pattern", "support_material_with_sheath", "support_material_spacing", "support_material_closing_radius", "support_material_style",
@@ -468,29 +464,81 @@ static std::vector<std::string> s_Preset_print_options {
     "dont_support_bridges", "thick_bridges", "notes", "complete_objects", "extruder_clearance_radius",
     "extruder_clearance_height", "gcode_comments", "gcode_label_objects", "output_filename_format", "post_process", "gcode_substitutions", "perimeter_extruder",
     "infill_extruder", "solid_infill_extruder", "support_material_extruder", "support_material_interface_extruder",
-    "ooze_prevention", "standby_temperature_delta", "interface_shells", "extrusion_width", "first_layer_extrusion_width",
+    "ooze_prevention", "standby_temperature_delta", "interface_shells", "extrusion_width", "first_layer_extrusion_width", 
     "perimeter_extrusion_width", "external_perimeter_extrusion_width", "infill_extrusion_width", "solid_infill_extrusion_width",
-    "top_infill_extrusion_width", "support_material_extrusion_width", "infill_overlap", "infill_anchor", "infill_anchor_max", "bridge_flow_ratio", "bridge_density",
+    "top_infill_extrusion_width", "support_material_extrusion_width", "infill_overlap", "infill_anchor", "infill_anchor_max", "bridge_flow_ratio",
     "elefant_foot_compensation", "xy_size_compensation", "resolution", "gcode_resolution", "arc_fitting",
     "wipe_tower", "wipe_tower_x", "wipe_tower_y",
     "wipe_tower_width", "wipe_tower_cone_angle", "wipe_tower_rotation_angle", "wipe_tower_brim_width", "wipe_tower_bridging", "single_extruder_multi_material_priming", "mmu_segmented_region_max_width",
     "mmu_segmented_region_interlocking_depth", "wipe_tower_extruder", "wipe_tower_no_sparse_layers", "wipe_tower_extra_flow", "wipe_tower_extra_spacing", "compatible_printers", "compatible_printers_condition", "inherits",
     "perimeter_generator", "wall_transition_length", "wall_transition_filter_deviation", "wall_transition_angle",
     "wall_distribution_count", "min_feature_size", "min_bead_width",
-    // SuperSlicer
-    "only_one_perimeter_first_layer", "only_one_perimeter_top", "min_width_top_surface", "solid_fill_pattern",
-    "small_area_infill_flow_compensation", "small_area_infill_flow_compensation_extrusion_length_0", "small_area_infill_flow_compensation_extrusion_length_1", "small_area_infill_flow_compensation_extrusion_length_2",
-    "small_area_infill_flow_compensation_extrusion_length_3", "small_area_infill_flow_compensation_extrusion_length_4", "small_area_infill_flow_compensation_extrusion_length_5",
-    "small_area_infill_flow_compensation_extrusion_length_6", "small_area_infill_flow_compensation_extrusion_length_7", "small_area_infill_flow_compensation_extrusion_length_8",
-    "small_area_infill_flow_compensation_extrusion_length_9", "small_area_infill_flow_compensation_compensation_factor_0", "small_area_infill_flow_compensation_compensation_factor_1",
-    "small_area_infill_flow_compensation_compensation_factor_2", "small_area_infill_flow_compensation_compensation_factor_3", "small_area_infill_flow_compensation_compensation_factor_4",
-    "small_area_infill_flow_compensation_compensation_factor_5", "small_area_infill_flow_compensation_compensation_factor_6", "small_area_infill_flow_compensation_compensation_factor_7",
-    "small_area_infill_flow_compensation_compensation_factor_8", "small_area_infill_flow_compensation_compensation_factor_9",
-    "overhangs_reverse", "infill_reverse", "internal_perimeters_reverse"
+    // BOSS
+    "only_one_perimeter_top",    
+    "only_one_perimeter_first_layer",
+    "min_width_top_surface",
+
+    "solid_fill_pattern",
+
+    "bridge_density",
+
+    "small_area_infill_flow_compensation",
+    "small_area_infill_flow_compensation_extrusion_length_0",
+    "small_area_infill_flow_compensation_extrusion_length_1",
+    "small_area_infill_flow_compensation_extrusion_length_2",
+    "small_area_infill_flow_compensation_extrusion_length_3",
+    "small_area_infill_flow_compensation_extrusion_length_4",
+    "small_area_infill_flow_compensation_extrusion_length_5",
+    "small_area_infill_flow_compensation_extrusion_length_6",
+    "small_area_infill_flow_compensation_extrusion_length_7",
+    "small_area_infill_flow_compensation_extrusion_length_8",
+    "small_area_infill_flow_compensation_extrusion_length_9",
+    "small_area_infill_flow_compensation_compensation_factor_0",
+    "small_area_infill_flow_compensation_compensation_factor_1",
+    "small_area_infill_flow_compensation_compensation_factor_2",
+    "small_area_infill_flow_compensation_compensation_factor_3",
+    "small_area_infill_flow_compensation_compensation_factor_4",
+    "small_area_infill_flow_compensation_compensation_factor_5",
+    "small_area_infill_flow_compensation_compensation_factor_6",
+    "small_area_infill_flow_compensation_compensation_factor_7",
+    "small_area_infill_flow_compensation_compensation_factor_8",
+    "small_area_infill_flow_compensation_compensation_factor_9",
+
+    "bridge_jerk",
+    "bridge_minimum_cruise_ratio",
+    "default_jerk",
+    "default_minimum_cruise_ratio",
+    "external_perimeter_jerk",
+    "external_perimeter_minimum_cruise_ratio",
+    "first_layer_jerk_over_raft",
+    "first_layer_jerk",
+    "first_layer_minimum_cruise_ratio_over_raft",
+    "first_layer_minimum_cruise_ratio",
+    "infill_jerk",
+    "infill_minimum_cruise_ratio",
+    "perimeter_jerk",
+    "perimeter_minimum_cruise_ratio",
+    "solid_infill_jerk",
+    "solid_infill_minimum_cruise_ratio",
+    "top_solid_infill_jerk",
+    "top_solid_infill_minimum_cruise_ratio",
+    "travel_jerk",
+    "travel_minimum_cruise_ratio",
+    "wipe_tower_jerk",
+    "wipe_tower_minimum_cruise_ratio",
+
+    "alternate_extra_perimeter", 
+
+    "overhangs_reverse",
+    "infill_reverse",
+    "internal_perimeters_reverse",
+
+    "first_layer_flow_ratio",
+    "top_layer_flow_ratio",
 };
 
 static std::vector<std::string> s_Preset_filament_options {
-    "filament_colour", "filament_diameter", "filament_type", "filament_soluble", "filament_shrink", "filament_notes", "filament_max_volumetric_speed",
+    "filament_colour", "filament_diameter", "filament_type", "filament_soluble", "filament_notes", "filament_max_volumetric_speed",
     "extrusion_multiplier", "filament_density", "filament_cost", "filament_spool_weight", "filament_loading_speed", "filament_loading_speed_start", "filament_load_time",
     "filament_unloading_speed", "filament_unloading_speed_start", "filament_unload_time", "filament_toolchange_delay", "filament_cooling_moves", "filament_stamping_loading_speed", "filament_stamping_distance",
     "filament_cooling_initial_speed", "filament_purge_multiplier", "filament_cooling_final_speed", "filament_ramming_parameters", "filament_minimal_purge_on_wipe_tower",
@@ -505,12 +553,13 @@ static std::vector<std::string> s_Preset_filament_options {
     "filament_travel_slope", "filament_travel_max_lift", "filament_travel_lift_before_obstacle",
     // Profile compatibility
     "filament_vendor", "compatible_prints", "compatible_prints_condition", "compatible_printers", "compatible_printers_condition", "inherits",
-    // SuperSlicer
+    // BOSS
     "chamber_temperature",
+    "filament_shrink", 
 };
 
 static std::vector<std::string> s_Preset_machine_limits_options {
-    "machine_max_acceleration_extruding", "machine_max_acceleration_retracting", "machine_max_acceleration_travel", "machine_max_accel_to_decel",
+    "machine_max_acceleration_extruding", "machine_max_acceleration_retracting", "machine_max_acceleration_travel",
     "machine_max_acceleration_x", "machine_max_acceleration_y", "machine_max_acceleration_z", "machine_max_acceleration_e",
     "machine_max_feedrate_x", "machine_max_feedrate_y", "machine_max_feedrate_z", "machine_max_feedrate_e",
     "machine_min_extruding_rate", "machine_min_travel_rate",
@@ -530,7 +579,7 @@ static std::vector<std::string> s_Preset_printer_options {
     "max_print_height", "default_print_profile", "inherits",
     "remaining_times", "silent_mode",
     "machine_limits_usage", "thumbnails", "thumbnails_format",
-    // SuperSlicer
+    // BOSS
     "init_z_rotate"
 };
 
